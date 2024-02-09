@@ -77,4 +77,4 @@ def submit_inquiry():
     return render_template('index.html', inquiry=prompt, answer=response, transactions=transactions)
 
 if __name__ == '__main__':
-    app.run(debug=True)													
+    app.run(debug=True,port=3000)													
