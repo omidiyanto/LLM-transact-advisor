@@ -1,6 +1,16 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request,  redirect
+
 
 app = Flask(__name__)
+
+# Function to format currency in Rupiah
+def format_currency(value):
+    if value is None:
+        return "Rp 0.00"
+    return "Rp {:,.0f}".format(value)
+
+# Register Jinja2 filter for currency formatting
+app.jinja_env.filters['format_currency'] = format_currency
 
 @app.route('/')
 def index():
@@ -28,12 +38,12 @@ Guidelines:
 
 Use the following format to answer the inquiry:
 
-Response: Result of the SQLite-compatible SQL query. If you know th transaction detailes such as the date, category, merchant, and amount, mention it in your answer to be more clear. - When asked for an \'overview\' of transactions, analyze and present the data in a way that highlights the proportions of different categories or types of transactions. For instance, calculate the percentage each category (like \'Groceries\', \'Dining\', \'Utilities\') contributes to the total transactions or total spending.
+Response: Result of the SQLite-compatible SQL query. If you know th transaction detailes such as the date, category, description, and amount, mention it in your answer to be more clear. - When asked for an \'overview\' of transactions, analyze and present the data in a way that highlights the proportions of different categories or types of transactions. For instance, calculate the percentage each category (like \'Groceries\', \'Dining\', \'Utilities\') contributes to the total transactions or total spending.
 ---------------------- line break
 <br>
 ---------------------- line break
 <br>
-Explanation: Concise and succinct explanation on your thought process on how to get the final answer including the relevant transaction details such as the date, category, merchant, and amount.
+Explanation: Concise and succinct explanation on your thought process on how to get the final answer including the relevant transaction details such as the date, category, description, and amount.
 ---------------------- line break
 <br>
 ---------------------- line break
@@ -62,7 +72,7 @@ def submit_inquiry():
     inquiry = request.form['inquiry']
 
     # Handle transaction queries
-    prompt = QUERY.format(table_name=table_name, columns=columns, time=datetime.now(pytz.timezone('America/New_York')), inquiry=inquiry)
+    prompt = QUERY.format(table_name=table_name, columns=columns, time=datetime.now(pytz.timezone('Asia/Jakarta')), inquiry=inquiry)
     response = db_chain.run(prompt)
 
     # Fetch transactions data again to pass to the template
@@ -76,5 +86,27 @@ def submit_inquiry():
 
     return render_template('index.html', inquiry=prompt, answer=response, transactions=transactions)
 
+@app.route('/delete/<int:id>', methods=['POST'])
+def delete_transaction(id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM transactions WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
+@app.route('/add', methods=['POST'])
+def add_transaction():
+    date = request.form['date']
+    category = request.form['category']
+    description = request.form['description']
+    amount = request.form['amount']
+
+    conn = get_db_connection()
+    conn.execute('INSERT INTO transactions (date, category, description, amount) VALUES (?, ?, ?, ?)', 
+                 (date, category, description, amount))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True,port=5000)
+    app.run(host='0.0.0.0',debug=True,port=5000)													

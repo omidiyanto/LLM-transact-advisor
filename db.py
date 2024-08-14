@@ -19,7 +19,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date DATE,
             category TEXT,
-            merchant TEXT,
+            description TEXT,
             amount INTEGER
         );
     """)
@@ -29,7 +29,7 @@ def init_db():
             reader = csv.reader(file)
             next(reader)  # Skip the header row
             sample_data = list(reader)
-            conn.executemany('INSERT INTO transactions (date, category, merchant, amount) VALUES (?, ?, ?, ?)', sample_data)
+            conn.executemany('INSERT INTO transactions (date, category, description, amount) VALUES (?, ?, ?, ?)', sample_data)
         
     # Commit the changes and close the connection
     conn.commit()

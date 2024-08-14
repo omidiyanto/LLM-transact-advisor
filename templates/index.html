@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Credit Card Transaction History</title>
+    <title>Daily Transaction Assistant</title>
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
     <div class="spinner" id="loadingSpinner"></div>
-    <h1>Credit Card Transaction History</h1>
+    <h1>Daily Transaction Assistant</h1>
 
     <!-- Introduction Section -->
     <div class="introduction">
-        <p>Welcome to the Credit Card Transaction History system. Here, you can inquire about various aspects of your financial transactions. Use the example queries as a guide to format your questions.</p>
-        <p><strong><span style="color: red;">Important: AI responses can vary, you might need to fine-tune your prompt template or LLM for improved results.</span></strong></p>
+        <p>Welcome to the Transaction Assistant. Here, you can inquire about various aspects of your financial transactions. Use the example queries as a guide to format your questions.</p>
     </div>
 
     <!-- Example Questions Section -->
@@ -22,45 +21,101 @@
             <li>How much did I spend on dining out in Q4 2023?</li>    
             <li>What are the top 2 categories of my spendings in 2023?</li>    
             <li>What is the average amount I spend on groceries?</li>    
-            <li>Which month had the highest utility bill payments in 2023?</li>                             
+            <li>Which month had the highest utility bill payments in 2023?</li>
         </ul>
     </div>
 
-    <div class="form-container">
+    <!-- Form Container -->
+    <div class="form-container" id="formContainer">
         <form method="POST" action="/inquiry">
             <label for="inquiry"><strong>Submit an Inquiry:</strong></label>
             <input type="text" id="inquiry" name="inquiry" placeholder="Make an inquiry..." required>
             <input type="submit" value="Submit" class="submit-button">
         </form>
-        <!-- Response display -->
     </div>
+
+    <!-- Toggle Button -->
+    <div class="toggle-container">
+        <button id="toggleFormButton" class="toggle-button">Show - Entry Data</button>
+    </div>
+
+    <!-- Form for Adding Transactions -->
+    <div class="form-container" id="addFormContainer">
+        <form method="POST" action="/add">
+            <label for="date"><strong>Date:</strong></label>
+            <input type="date" id="date" name="date" required>
+            <br>
+            <label for="category"><strong>Category:</strong></label>
+            <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option value="Food">Food</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Laundry">Laundry</option>
+                <option value="Loan">Uang Kos</option>
+                <option value="Loan">Jajan</option>
+                <option value="Unexpected">Others</option>
+            </select>
+            <br>
+            <label for="description"><strong>Description:</strong></label>
+            <input type="text" id="description" name="description" required>
+            <br>
+            <label for="amount"><strong>Amount:</strong></label>
+            <input type="number" id="amount" name="amount" required>
+            <br>
+            <input type="submit" value="Add" class="submit-button">
+        </form>
+    </div>
+
     {% if answer %}
     <div class="response">
         <p><strong>Response:</strong> {{ answer|safe }}</p>
     </div>
     {% endif %}
+
     <table>
         <tr>
             <th>Date</th>
             <th>Category</th>
-            <th>Merchant</th>
+            <th>Description</th>
             <th>Amount</th>
+            <th>Delete</th>
         </tr>
         {% for transaction in transactions %}
         <tr>
             <td>{{ transaction.date }}</td>
             <td>{{ transaction.category }}</td>
-            <td>{{ transaction.merchant }}</td>
-            <td>{{ transaction.amount }}</td>
+            <td>{{ transaction.description }}</td>
+            <td>{{ transaction.amount|format_currency }}</td> 
+            <td>
+                <form method="POST" action="/delete/{{ transaction.id }}">
+                    <input type="submit" value="x" class="delete-button" onclick="return confirm('Are you sure you want to delete this item?');">
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </table>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var form = document.querySelector('form');
+            var formContainer = document.getElementById('formContainer');
+            var addFormContainer = document.getElementById('addFormContainer');
+            var toggleFormButton = document.getElementById('toggleFormButton');
             var spinner = document.getElementById('loadingSpinner');
-    
-            form.onsubmit = function() {
+
+            // Toggle form visibility
+            toggleFormButton.onclick = function() {
+                if (addFormContainer.style.display === 'none' || addFormContainer.style.display === '') {
+                    addFormContainer.style.display = 'block';
+                    toggleFormButton.textContent = 'Hide - Entry Data';
+                } else {
+                    addFormContainer.style.display = 'none';
+                    toggleFormButton.textContent = 'Show - Entry Data';
+                }
+            };
+
+            // Show spinner when form is submitted
+            formContainer.onsubmit = function() {
                 spinner.style.display = 'block';
             };
         });
